@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- 
+    AgriManagement アプリアイコン
+    
+    デザインコンセプト:
+    - 緑色の背景（農業のテーマカラー）
+    - 白い葉っぱのシルエット（農業を象徴）
+    - シンプルで認識しやすいデザイン
+  -->
+  
+  <!-- 背景（角丸の緑色） -->
+  <rect width="512" height="512" rx="96" ry="96" fill="#16a34a"/>
+  
+  <!-- 葉っぱのシルエット -->
+  <g transform="translate(256, 256)">
+    <!-- メインの葉 -->
+    <path 
+      d="M-80 80 
+         C-80 -40 -40 -120 80 -160 
+         C40 -80 40 0 40 80 
+         C40 120 20 160 -20 180 
+         C-60 160 -80 120 -80 80 Z" 
+      fill="white" 
+      opacity="0.95"
+    />
+    <!-- 葉脈（中央線） -->
+    <path 
+      d="M0 -140 C0 -60 -10 20 -20 160" 
+      stroke="#16a34a" 
+      stroke-width="8" 
+      fill="none" 
+      opacity="0.3"
+    />
+    <!-- 小さな葉脈 -->
+    <path 
+      d="M0 -100 C30 -80 50 -40 60 0" 
+      stroke="#16a34a" 
+      stroke-width="4" 
+      fill="none" 
+      opacity="0.2"
+    />
+    <path 
+      d="M-10 -20 C20 0 40 40 50 80" 
+      stroke="#16a34a" 
+      stroke-width="4" 
+      fill="none" 
+      opacity="0.2"
+    />
+  </g>
+</svg>
