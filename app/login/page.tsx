@@ -8,13 +8,17 @@
  * - ログイン成功後、ダッシュボード（または元々アクセスしようとしていたページ）に遷移
  */
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseClient } from "@/lib/supabase/client";
 import { AuthHeader } from "@/components/auth/AuthHeader";
 import { LoginForm } from "@/components/auth/LoginForm";
 
-export default function LoginPage() {
+/**
+ * ログインページの内部コンポーネント
+ * useSearchParams を使用するため、Suspense でラップする必要がある
+ */
+function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   // ログイン後にリダイレクトするURL（元々アクセスしようとしていたページ）
@@ -100,5 +104,26 @@ export default function LoginPage() {
         />
       </main>
     </div>
+  );
+}
+
+/**
+ * ログインページ（エクスポート）
+ * Next.js App Router で useSearchParams を使用するため、Suspense でラップ
+ */
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-b from-green-50 to-white flex flex-col">
+          <AuthHeader />
+          <main className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 pb-12">
+            <div className="text-gray-500">読み込み中...</div>
+          </main>
+        </div>
+      }
+    >
+      <LoginPageContent />
+    </Suspense>
   );
 }

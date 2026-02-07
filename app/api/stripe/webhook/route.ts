@@ -131,7 +131,8 @@ async function handleCheckoutCompleted(
   }
 
   // サブスクリプションの詳細を取得
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  // 型を明示的に指定して、current_period_start等のプロパティにアクセス可能にする
+  const subscription: Stripe.Subscription = await stripe.subscriptions.retrieve(subscriptionId);
 
   // メタデータからSupabaseユーザーIDを取得
   const userId =
@@ -158,6 +159,9 @@ async function handleCheckoutCompleted(
       ? session.customer
       : session.customer?.id || "";
 
+  // Stripe SDK v20以降では、期間情報はitems.data[0]から取得
+  const subscriptionItem = subscription.items.data[0];
+
   // サブスクリプション情報をデータベースに保存
   await upsertSubscription(
     supabase,
@@ -166,8 +170,8 @@ async function handleCheckoutCompleted(
     subscriptionId,
     planType,
     "active",
-    new Date(subscription.current_period_start * 1000),
-    new Date(subscription.current_period_end * 1000)
+    new Date(subscriptionItem.current_period_start * 1000),
+    new Date(subscriptionItem.current_period_end * 1000)
   );
 
   console.log(`ユーザー ${userId} のサブスクリプションを ${planType} に更新しました`);
@@ -227,6 +231,9 @@ async function handleSubscriptionUpdated(
       status = "trialing";
     }
 
+    // Stripe SDK v20以降では、期間情報はitems.data[0]から取得
+    const subscriptionItem = subscription.items.data[0];
+
     // サブスクリプション情報を更新
     await upsertSubscription(
       supabase,
@@ -235,8 +242,8 @@ async function handleSubscriptionUpdated(
       subscription.id,
       planType,
       status,
-      new Date(subscription.current_period_start * 1000),
-      new Date(subscription.current_period_end * 1000)
+      new Date(subscriptionItem.current_period_start * 1000),
+      new Date(subscriptionItem.current_period_end * 1000)
     );
 
     console.log(
@@ -268,6 +275,9 @@ async function handleSubscriptionUpdated(
     status = "trialing";
   }
 
+  // Stripe SDK v20以降では、期間情報はitems.data[0]から取得
+  const subscriptionItemForPeriod = subscription.items.data[0];
+
   await upsertSubscription(
     supabase,
     userId,
@@ -275,8 +285,8 @@ async function handleSubscriptionUpdated(
     subscription.id,
     planType,
     status,
-    new Date(subscription.current_period_start * 1000),
-    new Date(subscription.current_period_end * 1000)
+    new Date(subscriptionItemForPeriod.current_period_start * 1000),
+    new Date(subscriptionItemForPeriod.current_period_end * 1000)
   );
 
   console.log(`ユーザー ${userId} のサブスクリプションを ${planType} に更新しました`);
@@ -323,10 +333,12 @@ async function handlePaymentFailed(invoice: Stripe.Invoice): Promise<void> {
   const supabase = createSupabaseAdminClient();
 
   // サブスクリプションIDを取得
+  // Stripe SDK v20以降では、parent.subscription_details.subscriptionからアクセス
+  const subscriptionData = invoice.parent?.subscription_details?.subscription;
   const subscriptionId =
-    typeof invoice.subscription === "string"
-      ? invoice.subscription
-      : invoice.subscription?.id;
+    typeof subscriptionData === "string"
+      ? subscriptionData
+      : subscriptionData?.id;
 
   if (!subscriptionId) {
     console.error("サブスクリプションIDが見つかりません");
@@ -457,15 +469,11 @@ export async function POST(request: NextRequest) {
 }
 
 // =============================================================================
-// Next.js設定
+// Next.js設定（App Routerでの注意事項）
 // =============================================================================
 
 /**
- * bodyParserを無効化
- * Stripeの署名検証には生のリクエストボディが必要なため
+ * Next.js App Router では request.text() を使用して
+ * 生のリクエストボディを取得できるため、bodyParser の無効化設定は不要です。
+ * （Pages Router の config.api.bodyParser = false は App Router では非推奨）
  */
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};

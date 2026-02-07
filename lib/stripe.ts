@@ -208,7 +208,8 @@ export function getStripeClient(): Stripe {
   // Stripeクライアントを作成して返す
   return new Stripe(secretKey, {
     // APIバージョンを明示的に指定（将来のバージョンアップ時の互換性のため）
-    apiVersion: "2025-01-27.acacia",
+    // Stripe SDK v20 で使用されるAPIバージョン
+    apiVersion: "2026-01-28.clover",
     // TypeScript環境での型サポートを有効化
     typescript: true,
   });
@@ -227,7 +228,7 @@ export function getStripeClient(): Stripe {
  */
 export const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2025-01-27.acacia",
+      apiVersion: "2026-01-28.clover",
       typescript: true,
     })
   : null;
