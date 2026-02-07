@@ -3,15 +3,20 @@
  * 
  * ビジネス上の流れ:
  * 1. フロントエンドからレシート画像（Base64形式）を受け取る
- * 2. OpenAI GPT-4o Visionを使って画像を解析
- * 3. レシートから「日付」「金額」「店舗名」「品目」を抽出
- * 4. 抽出したデータをJSON形式で返却
+ * 2. ログインユーザーの認証とプラン確認
+ * 3. 無料プランの場合、月間使用回数をチェック（50回/月まで）
+ * 4. OpenAI GPT-4o Visionを使って画像を解析
+ * 5. レシートから「日付」「金額」「店舗名」「品目」を抽出
+ * 6. 使用回数をカウントアップして保存
+ * 7. 抽出したデータをJSON形式で返却
  * 
  * これにより、ユーザーは手入力の手間を省いて経費登録ができます
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { checkUsageLimit, incrementUsage } from "@/lib/subscription";
 
 /**
  * OpenAIクライアントを取得する関数
@@ -93,9 +98,58 @@ JSONのみを返してください。説明文は不要です。
 /**
  * POSTリクエストを処理
  * レシート画像を受け取り、OCR解析結果を返す
+ * 
+ * 使用制限について：
+ * - 無料プラン: 月50回まで
+ * - 有料プラン: 無制限
  */
 export async function POST(request: NextRequest) {
   try {
+    // ========================================
+    // Step 1: ログインユーザーの認証
+    // ========================================
+    // サーバー用のSupabaseクライアントを作成してユーザー情報を取得
+    const supabase = await createSupabaseServerClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    // ログインしていない場合はエラー（OCR機能は認証が必要）
+    if (authError || !user) {
+      return NextResponse.json(
+        { 
+          error: "ログインが必要です", 
+          code: "UNAUTHORIZED" 
+        },
+        { status: 401 }
+      );
+    }
+
+    // ========================================
+    // Step 2: 使用制限のチェック
+    // ========================================
+    // ユーザーのプランと今月の使用状況をチェック
+    const usageCheck = await checkUsageLimit(supabase, user.id, "ocr");
+
+    // 制限を超えている場合はアップグレードを促すエラーを返す
+    if (!usageCheck.allowed) {
+      return NextResponse.json(
+        {
+          error: `今月のOCR使用回数（${usageCheck.limit}回）に達しました。プランをアップグレードすると無制限で使用できます。`,
+          code: "USAGE_LIMIT_EXCEEDED",
+          // フロントエンドで残り回数を表示するための情報
+          usageInfo: {
+            currentUsage: usageCheck.currentUsage,
+            limit: usageCheck.limit,
+            remaining: usageCheck.remaining,
+            planType: usageCheck.planType,
+          },
+        },
+        { status: 403 }
+      );
+    }
+
+    // ========================================
+    // Step 3: リクエストの検証
+    // ========================================
     // リクエストボディから画像データを取得
     const body = await request.json();
     const { imageBase64 } = body;
@@ -108,6 +162,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ========================================
+    // Step 4: OpenAI APIの準備
+    // ========================================
     // OpenAIクライアントを取得（APIキーがない場合はエラー）
     let openai: OpenAI;
     try {
@@ -173,10 +230,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 正常に解析できた場合、結果を返す
+    // ========================================
+    // Step 6: 使用回数をインクリメント
+    // ========================================
+    // OCR処理が成功したので、使用回数を1増やす
+    // これにより次回の使用制限チェックに反映される
+    try {
+      await incrementUsage(supabase, user.id, "ocr");
+    } catch (usageError) {
+      // 使用回数の更新に失敗しても、OCR結果は返す（ユーザー体験を優先）
+      // ただしログには記録して、後で対応できるようにする
+      console.error("使用回数の更新に失敗しました:", usageError);
+    }
+
+    // ========================================
+    // Step 7: 結果を返却
+    // ========================================
+    // 正常に解析できた場合、結果と残り使用回数を返す
     return NextResponse.json({
       success: true,
       data: ocrResult,
+      // フロントエンドで残り回数を表示するための情報
+      usageInfo: {
+        currentUsage: usageCheck.currentUsage + 1, // 今回の使用を含める
+        limit: usageCheck.limit,
+        remaining: usageCheck.remaining - 1, // 今回の使用を引く
+        planType: usageCheck.planType,
+      },
     });
 
   } catch (error: any) {

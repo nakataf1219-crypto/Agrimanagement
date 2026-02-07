@@ -24,6 +24,9 @@ import {
   ExpenseCategorySection,
 } from "@/components/settings";
 
+// サブスクリプション管理コンポーネント
+import { SubscriptionSection } from "@/components/subscription";
+
 // 下部ナビゲーション
 import BottomNav from "@/components/BottomNav";
 
@@ -157,6 +160,9 @@ export default function SettingsPage() {
       {/* メインコンテンツ */}
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-2xl">
         <div className="space-y-6">
+          {/* プランと使用状況セクション */}
+          <SubscriptionSection userId={currentUser.id} />
+
           {/* 農場情報セクション */}
           <UserProfileSection userId={currentUser.id} />
 
