@@ -87,11 +87,11 @@ export function PricingTable({
         throw new Error(error.error || "決済処理の開始に失敗しました");
       }
 
-      const { url } = await response.json();
+      const { checkoutUrl } = await response.json();
 
       // Stripe Checkoutページへリダイレクト
-      if (url) {
-        window.location.href = url;
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl;
       }
     } catch (error) {
       console.error("プラン選択エラー:", error);

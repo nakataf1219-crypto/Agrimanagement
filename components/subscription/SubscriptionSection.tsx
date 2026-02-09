@@ -152,11 +152,11 @@ export function SubscriptionSection({ userId }: SubscriptionSectionProps) {
         throw new Error(errorData.error || "ポータルの開始に失敗しました");
       }
 
-      const { url } = await response.json();
+      const { portalUrl } = await response.json();
 
       // Stripeカスタマーポータルへリダイレクト
-      if (url) {
-        window.location.href = url;
+      if (portalUrl) {
+        window.location.href = portalUrl;
       }
     } catch (err) {
       console.error("ポータル遷移エラー:", err);
