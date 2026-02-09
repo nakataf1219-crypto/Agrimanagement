@@ -52,13 +52,15 @@ export function DashboardHeader({
               </div>
             )}
 
-            {/* プランボタン */}
-            <Button
-              variant="ghost"
-              className="text-white hover:bg-white/10 border border-white/30"
-            >
-              プラン
-            </Button>
+            {/* プランボタン（料金プラン画面へのリンク） */}
+            <Link href="/pricing">
+              <Button
+                variant="ghost"
+                className="text-white hover:bg-white/10 border border-white/30"
+              >
+                プラン
+              </Button>
+            </Link>
 
             {/* 設定ボタン（/settingsページへのリンク） */}
             <Link href="/settings">

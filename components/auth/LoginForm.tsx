@@ -50,6 +50,7 @@ export function LoginForm({
             <SubmitButton loading={loading} />
           </form>
           <SignupLink />
+          <LegalLink />
         </CardContent>
       </Card>
     </div>
@@ -154,6 +155,20 @@ function SignupLink() {
         className="text-green-600 hover:text-green-700 font-medium hover:underline"
       >
         新規登録
+      </Link>
+    </div>
+  );
+}
+
+/** 特定商取引法へのリンク */
+function LegalLink() {
+  return (
+    <div className="mt-4 text-center text-xs">
+      <Link
+        href="/legal/tokushoho"
+        className="text-muted-foreground hover:text-green-600 hover:underline"
+      >
+        特定商取引法に基づく表記
       </Link>
     </div>
   );

@@ -275,6 +275,16 @@ export default function SignupPage() {
                   ログイン
                 </Link>
               </div>
+
+              {/* 特定商取引法へのリンク */}
+              <div className="mt-4 text-center text-xs">
+                <Link
+                  href="/legal/tokushoho"
+                  className="text-muted-foreground hover:text-green-600 hover:underline"
+                >
+                  特定商取引法に基づく表記
+                </Link>
+              </div>
             </CardContent>
           </Card>
         </div>
