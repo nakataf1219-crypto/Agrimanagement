@@ -1,4 +1,4 @@
-import type { SVGProps } from "react";
+import type { ComponentType, SVGProps } from "react";
 import { FileText, LineChart, MessageCircleMore, Receipt } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -74,7 +74,7 @@ export function FeaturesSection() {
  * - description: その機能でどんな悩みを解決できるかの説明
  */
 type FeatureItem = {
-  icon: (props: SVGProps<SVGSVGElement>) => JSX.Element;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
   title: string;
   description: string;
 };
