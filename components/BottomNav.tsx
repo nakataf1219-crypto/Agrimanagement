@@ -6,6 +6,10 @@
  * ビジネス上の役割:
  * - ホーム、分析、レシート（経費登録）、設定の4つの主要機能へのアクセスを提供
  * - 「レシート」ボタンをタップすると、カメラでレシートを撮影して経費を自動登録できる
+ * 
+ * 表示ルール:
+ * - ログイン後のダッシュボード系ページでのみ表示
+ * - LP（/）やログイン・サインアップページでは非表示
  */
 
 import { useState } from "react";
@@ -14,17 +18,57 @@ import { usePathname } from "next/navigation";
 import { Home, BarChart2, Camera, Settings } from "lucide-react";
 import ReceiptScanner from "@/components/receipt/ReceiptScanner";
 
+/**
+ * BottomNavを表示しないページのパスリスト
+ * 
+ * ビジネス上の理由:
+ * - LP（/）はログイン前のユーザー向けなので、ダッシュボード用ナビは不要
+ * - ログイン・サインアップページも同様に認証前の画面
+ * - 特商法ページもLP系のページなのでナビ不要
+ * - 料金ページもLP系なのでナビ不要
+ */
+const HIDDEN_NAV_PATHS = [
+  "/",           // ランディングページ
+  "/login",      // ログインページ
+  "/signup",     // サインアップページ
+  "/legal",      // 法的ページ（特商法など）
+  "/pricing",    // 料金ページ
+];
+
+/**
+ * 現在のパスがBottomNavを非表示にすべきかを判定
+ * 
+ * @param pathname - 現在のURLパス
+ * @returns true: ナビを非表示にする、false: ナビを表示する
+ */
+const shouldHideBottomNav = (pathname: string | null): boolean => {
+  if (!pathname) return true;
+  
+  // 完全一致または前方一致でチェック
+  return HIDDEN_NAV_PATHS.some(
+    (hiddenPath) =>
+      pathname === hiddenPath ||
+      (hiddenPath !== "/" && pathname.startsWith(hiddenPath + "/"))
+  );
+};
+
 export default function BottomNav() {
   const pathname = usePathname();
   
   // レシートスキャナーモーダルの開閉状態
   const [isReceiptScannerOpen, setIsReceiptScannerOpen] = useState(false);
+  
+  // LP・ログイン・サインアップページではナビを表示しない
+  if (shouldHideBottomNav(pathname)) {
+    return null;
+  }
 
   // ナビゲーション項目の定義
   // isButton: true の項目はリンクではなくボタンとして動作
+  // 注意: ホームは /dashboard にリンク（LPの / とは分離）
   const navItems = [
     {
-      href: "/",
+      href: "/dashboard",
       label: "ホーム",
       icon: Home,
       isButton: false,
@@ -65,10 +109,10 @@ export default function BottomNav() {
             {navItems.map((item) => {
               const Icon = item.icon;
               
-              // ホーム（/）の場合は /dashboard もアクティブとして扱う
+              // ホームボタン（/dashboard）のアクティブ判定
               const isActive =
-                item.href === "/"
-                  ? pathname === "/" || pathname === "/dashboard" || pathname?.startsWith("/dashboard/")
+                item.href === "/dashboard"
+                  ? pathname === "/dashboard" || pathname?.startsWith("/dashboard/")
                   : pathname === item.href || pathname?.startsWith(item.href + "/");
 
               // ボタンタイプの場合（レシートボタン）
