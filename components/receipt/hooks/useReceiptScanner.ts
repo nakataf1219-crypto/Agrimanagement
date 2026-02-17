@@ -14,6 +14,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { compressImageFile } from "@/lib/imageCompression";
 
 /**
  * 処理状態の型
@@ -82,7 +83,7 @@ export function useReceiptScanner(onClose: () => void): UseReceiptScannerReturn 
   // ===== ヘルパー関数 =====
 
   /**
-   * 画像をBase64形式に変換する
+   * 画像をBase64形式に変換する（非圧縮版、プレビュー用フォールバック）
    * OCR APIに送信するために必要な形式
    */
   const convertImageToBase64 = (file: File): Promise<string> => {
@@ -110,6 +111,11 @@ export function useReceiptScanner(onClose: () => void): UseReceiptScannerReturn 
   /**
    * 画像が選択された時の処理
    * カメラ撮影・ファイル選択の両方で呼ばれる
+   *
+   * 改善ポイント:
+   * - 画像を圧縮してからAPIに送信（通信時間短縮 + API処理速度向上）
+   * - プレビュー用の画像も圧縮版を使用（メモリ節約）
+   * - 圧縮に失敗した場合は非圧縮版にフォールバック
    */
   const handleImageSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -121,8 +127,22 @@ export function useReceiptScanner(onClose: () => void): UseReceiptScannerReturn 
       setErrorMessage(null);
       setOcrResult(null);
 
-      // 画像をBase64に変換してプレビュー表示
-      const base64Image = await convertImageToBase64(file);
+      // 画像を圧縮してBase64に変換（速度向上のキモ）
+      // 圧縮に失敗した場合は非圧縮版にフォールバック
+      let base64Image: string;
+      try {
+        base64Image = await compressImageFile(file, {
+          maxWidth: 1200,
+          maxHeight: 1600,
+          quality: 0.85,
+        });
+      } catch {
+        // 圧縮失敗時は従来の方法でBase64変換
+        console.warn("画像圧縮に失敗。非圧縮版を使用します。");
+        base64Image = await convertImageToBase64(file);
+      }
+
+      // プレビュー表示
       setImagePreview(base64Image);
 
       // OCR APIを呼び出し

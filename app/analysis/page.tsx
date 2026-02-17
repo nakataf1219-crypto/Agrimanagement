@@ -15,9 +15,12 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { TrendingUp, TrendingDown, Wallet } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, Bot } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import ExpensePieChart from "@/components/ExpensePieChart";
+import ExportButton from "@/components/analysis/ExportButton";
+import BottomNav from "@/components/BottomNav";
+import { AIChatModal } from "@/components/ai-assistant";
 
 // 取引データの型定義（売上と経費を統合）
 type Transaction = {
@@ -48,6 +51,9 @@ export default function AnalysisPage() {
   });
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
+
+  // AIチャットモーダルの開閉状態
+  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
   
   // 年月選択のstate（初期値は過去6ヶ月）
   const initialRange = getInitialDateRange(6);
@@ -218,12 +224,19 @@ export default function AnalysisPage() {
   }, [startYear, startMonth, endYear, endMonth]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20">
       {/* ヘッダー */}
       <header className="bg-green-600 text-white shadow-md">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <h1 className="text-xl font-bold">分析</h1>
+            {/* Excel出力ボタン（ヘッダー右側） */}
+            <ExportButton
+              startYear={startYear}
+              startMonth={startMonth}
+              endYear={endYear}
+              endMonth={endMonth}
+            />
           </div>
         </div>
       </header>
@@ -537,6 +550,24 @@ export default function AnalysisPage() {
           <ExpensePieChart />
         </div>
       </main>
+
+      {/* AIアシスタント フローティングボタン（右下に固定表示） */}
+      <button
+        onClick={() => setIsAIChatOpen(true)}
+        className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white shadow-lg flex items-center justify-center transition-all hover:scale-105"
+        aria-label="AIアシスタントを開く"
+      >
+        <Bot className="w-6 h-6" />
+      </button>
+
+      {/* AIチャットモーダル */}
+      <AIChatModal
+        isOpen={isAIChatOpen}
+        onClose={() => setIsAIChatOpen(false)}
+      />
+
+      {/* 下部ナビゲーション */}
+      <BottomNav />
     </div>
   );
 }

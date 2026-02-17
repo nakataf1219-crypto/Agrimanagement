@@ -11,6 +11,9 @@ import {
   ActionCards,
   KPISection,
 } from "@/components/dashboard";
+import { Bot } from "lucide-react";
+import { AIChatModal } from "@/components/ai-assistant";
+import BottomNav from "@/components/BottomNav";
 
 /**
  * KPIデータの型定義
@@ -77,6 +80,9 @@ export default function DashboardPage() {
   // ユーザー情報とログアウト状態
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
+
+  // AIチャットモーダルの開閉状態
+  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
 
   /**
    * ユーザー表示名を取得する関数
@@ -207,7 +213,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20">
       {/* ヘッダー */}
       <DashboardHeader
         currentUser={currentUser}
@@ -236,6 +242,24 @@ export default function DashboardPage() {
           formatCurrency={formatCurrency}
         />
       </main>
+
+      {/* AIアシスタント フローティングボタン（右下に固定表示） */}
+      <button
+        onClick={() => setIsAIChatOpen(true)}
+        className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white shadow-lg flex items-center justify-center transition-all hover:scale-105"
+        aria-label="AIアシスタントを開く"
+      >
+        <Bot className="w-6 h-6" />
+      </button>
+
+      {/* AIチャットモーダル */}
+      <AIChatModal
+        isOpen={isAIChatOpen}
+        onClose={() => setIsAIChatOpen(false)}
+      />
+
+      {/* 下部ナビゲーション */}
+      <BottomNav />
     </div>
   );
 }
